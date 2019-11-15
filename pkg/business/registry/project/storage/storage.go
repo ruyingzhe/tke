@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+
 	"tkestack.io/tke/pkg/apiserver/authentication"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -119,6 +120,7 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 	if err := util.FilterProject(ctx, o); err != nil {
 		return nil, err
 	}
+
 	return o, nil
 }
 
