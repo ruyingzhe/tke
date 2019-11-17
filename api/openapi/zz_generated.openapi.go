@@ -714,6 +714,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/auth/v1.APIKeyReqPassword":                               schema_tke_api_auth_v1_APIKeyReqPassword(ref),
 		"tkestack.io/tke/api/auth/v1.APIKeySpec":                                      schema_tke_api_auth_v1_APIKeySpec(ref),
 		"tkestack.io/tke/api/auth/v1.APIKeyStatus":                                    schema_tke_api_auth_v1_APIKeyStatus(ref),
+		"tkestack.io/tke/api/auth/v1.APISigningKey":                                   schema_tke_api_auth_v1_APISigningKey(ref),
+		"tkestack.io/tke/api/auth/v1.APISigningKeyList":                               schema_tke_api_auth_v1_APISigningKeyList(ref),
+		"tkestack.io/tke/api/auth/v1.ConfigMap":                                       schema_tke_api_auth_v1_ConfigMap(ref),
+		"tkestack.io/tke/api/auth/v1.ConfigMapList":                                   schema_tke_api_auth_v1_ConfigMapList(ref),
 		"tkestack.io/tke/api/auth/v1.LocalIdentity":                                   schema_tke_api_auth_v1_LocalIdentity(ref),
 		"tkestack.io/tke/api/auth/v1.LocalIdentityList":                               schema_tke_api_auth_v1_LocalIdentityList(ref),
 		"tkestack.io/tke/api/auth/v1.LocalIdentitySpec":                               schema_tke_api_auth_v1_LocalIdentitySpec(ref),
@@ -33622,19 +33626,18 @@ func schema_tke_api_auth_v1_APIKey(ref common.ReferenceCallback) common.OpenAPID
 							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
-					"Spec": {
+					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec defines the desired identities of APIkey in this set.",
 							Ref:         ref("tkestack.io/tke/api/auth/v1.APIKeySpec"),
 						},
 					},
-					"Status": {
+					"status": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("tkestack.io/tke/api/auth/v1.APIKeyStatus"),
 						},
 					},
 				},
-				Required: []string{"Spec", "Status"},
 			},
 		},
 		Dependencies: []string{
@@ -33682,6 +33685,7 @@ func schema_tke_api_auth_v1_APIKeyList(ref common.ReferenceCallback) common.Open
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
@@ -33762,7 +33766,7 @@ func schema_tke_api_auth_v1_APIKeyReqPassword(ref common.ReferenceCallback) comm
 					},
 					"username": {
 						SchemaProps: spec.SchemaProps{
-							Description: "UserName",
+							Description: "Username",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -33815,6 +33819,13 @@ func schema_tke_api_auth_v1_APIKeySpec(ref common.ReferenceCallback) common.Open
 							Format: "",
 						},
 					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Username is creator",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Description describes api keys usage.",
@@ -33856,16 +33867,215 @@ func schema_tke_api_auth_v1_APIKeyStatus(ref common.ReferenceCallback) common.Op
 							Format:      "",
 						},
 					},
-					"deleted": {
+				},
+			},
+		},
+	}
+}
+
+func schema_tke_api_auth_v1_APISigningKey(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APISigningKey hold encryption and signing key.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Deleted represents whether the apikey has been deleted.",
-							Type:        []string{"boolean"},
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"signingKey": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+					"signingKeyPub": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
 						},
 					},
 				},
 			},
 		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_tke_api_auth_v1_APISigningKeyList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "APISigningKeyList is the whole list of all signing key.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of keys.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.APISigningKey"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/auth/v1.APISigningKey"},
+	}
+}
+
+func schema_tke_api_auth_v1_ConfigMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigMap holds configuration data for tke to consume.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"data": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"binaryData": {
+						SchemaProps: spec.SchemaProps{
+							Description: "BinaryData contains the binary data. Each key must consist of alphanumeric characters, '-', '_' or '.'. BinaryData can contain byte sequences that are not in the UTF-8 range. The keys stored in BinaryData must not overlap with the ones in the Data field, this is enforced during validation process.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "byte",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_tke_api_auth_v1_ConfigMapList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigMapList is a resource containing a list of ConfigMap objects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Items is the list of ConfigMaps.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.ConfigMap"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/auth/v1.ConfigMap"},
 	}
 }
 
@@ -33969,7 +34179,7 @@ func schema_tke_api_auth_v1_LocalIdentitySpec(ref common.ReferenceCallback) comm
 				Description: "LocalIdentitySpec is a description of an identity.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"userName": {
+					"username": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -34039,7 +34249,7 @@ func schema_tke_api_auth_v1_LocalIdentitySpec(ref common.ReferenceCallback) comm
 						},
 					},
 				},
-				Required: []string{"userName", "displayName", "email", "phoneNumber"},
+				Required: []string{"username", "displayName", "email", "phoneNumber"},
 			},
 		},
 	}
