@@ -66,6 +66,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().ConfigMaps().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("localidentities"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().LocalIdentities().Informer()}, nil
+	case auth.SchemeGroupVersion.WithResource("policies"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Policies().Informer()}, nil
+	case auth.SchemeGroupVersion.WithResource("rules"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Rules().Informer()}, nil
 
 		// Group=business.tkestack.io, Version=internalVersion
 	case business.SchemeGroupVersion.WithResource("configmaps"):
