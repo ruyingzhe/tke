@@ -27,6 +27,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
+	github.com/casbin/casbin/v2 v2.1.2
 	github.com/coreos/bbolt v1.3.3 // indirect
 	github.com/coreos/etcd v3.3.15+incompatible
 	github.com/coreos/go-oidc v2.1.0+incompatible
@@ -57,7 +58,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.9.5 // indirect
 	github.com/hashicorp/go-hclog v0.8.0
-	github.com/hashicorp/go-plugin v0.0.0-20181212150838-f444068e8f5a
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/howeyc/fsnotify v0.9.0
 	github.com/influxdata/influxdb1-client v0.0.0-20190402204710-8ff2fc3824fc
@@ -99,7 +99,7 @@ require (
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	google.golang.org/appengine v1.6.1 // indirect
-	google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64
+	google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64 // indirect
 	google.golang.org/grpc v1.23.0
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
