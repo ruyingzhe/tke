@@ -718,7 +718,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/auth/v1.APIKeyStatus":                                    schema_tke_api_auth_v1_APIKeyStatus(ref),
 		"tkestack.io/tke/api/auth/v1.APISigningKey":                                   schema_tke_api_auth_v1_APISigningKey(ref),
 		"tkestack.io/tke/api/auth/v1.APISigningKeyList":                               schema_tke_api_auth_v1_APISigningKeyList(ref),
+		"tkestack.io/tke/api/auth/v1.Action":                                          schema_tke_api_auth_v1_Action(ref),
 		"tkestack.io/tke/api/auth/v1.Binding":                                         schema_tke_api_auth_v1_Binding(ref),
+		"tkestack.io/tke/api/auth/v1.Category":                                        schema_tke_api_auth_v1_Category(ref),
+		"tkestack.io/tke/api/auth/v1.CategoryList":                                    schema_tke_api_auth_v1_CategoryList(ref),
+		"tkestack.io/tke/api/auth/v1.CategorySpec":                                    schema_tke_api_auth_v1_CategorySpec(ref),
 		"tkestack.io/tke/api/auth/v1.ConfigMap":                                       schema_tke_api_auth_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/auth/v1.ConfigMapList":                                   schema_tke_api_auth_v1_ConfigMapList(ref),
 		"tkestack.io/tke/api/auth/v1.LocalIdentity":                                   schema_tke_api_auth_v1_LocalIdentity(ref),
@@ -33979,6 +33983,34 @@ func schema_tke_api_auth_v1_APISigningKeyList(ref common.ReferenceCallback) comm
 	}
 }
 
+func schema_tke_api_auth_v1_Action(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Action defines a action verb for authorization.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name represents user access review request verb.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Description describes the action.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name", "description"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_auth_v1_Binding(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -34000,7 +34032,7 @@ func schema_tke_api_auth_v1_Binding(ref common.ReferenceCallback) common.OpenAPI
 							Format:      "",
 						},
 					},
-					"subject": {
+					"subjects": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Subjects holds references to the objects the policy applies to.",
 							Type:        []string{"array"},
@@ -34018,6 +34050,142 @@ func schema_tke_api_auth_v1_Binding(ref common.ReferenceCallback) common.OpenAPI
 		},
 		Dependencies: []string{
 			"tkestack.io/tke/api/auth/v1.Subject"},
+	}
+}
+
+func schema_tke_api_auth_v1_Category(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Category defines a category of actions for policy.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"Spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/auth/v1.CategorySpec"),
+						},
+					},
+				},
+				Required: []string{"Spec"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/auth/v1.CategorySpec"},
+	}
+}
+
+func schema_tke_api_auth_v1_CategoryList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CategoryList is the whole list of policy Category.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of category.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Category"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/auth/v1.Category"},
+	}
+}
+
+func schema_tke_api_auth_v1_CategorySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"categoryName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CategoryName identifies action category",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"displayName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DisplayName used to display category name",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"actions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Actions represents a series of actions work on the policy category",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Action"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"categoryName", "displayName", "actions"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/auth/v1.Action"},
 	}
 }
 
@@ -34233,6 +34401,19 @@ func schema_tke_api_auth_v1_LocalIdentitySpec(ref common.ReferenceCallback) comm
 				Description: "LocalIdentitySpec is a description of an identity.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"finalizers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 					"username": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -34316,6 +34497,12 @@ func schema_tke_api_auth_v1_LocalIdentityStatus(ref common.ReferenceCallback) co
 				Description: "LocalIdentityStatus is a description of an identity status.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"locked": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
@@ -34449,13 +34636,25 @@ func schema_tke_api_auth_v1_PolicySpec(ref common.ReferenceCallback) common.Open
 							},
 						},
 					},
+					"policyName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"tenantID": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
 						},
 					},
-					"displayName": {
+					"category": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"type": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -34473,20 +34672,6 @@ func schema_tke_api_auth_v1_PolicySpec(ref common.ReferenceCallback) common.Open
 							Format: "",
 						},
 					},
-					"subjects": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Subjects is the policy subjects.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
 					"statement": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("tkestack.io/tke/api/auth/v1.Statement"),
@@ -34499,7 +34684,7 @@ func schema_tke_api_auth_v1_PolicySpec(ref common.ReferenceCallback) common.Open
 						},
 					},
 				},
-				Required: []string{"tenantID", "displayName", "username", "statement"},
+				Required: []string{"policyName", "tenantID", "category", "type", "username", "statement"},
 			},
 		},
 		Dependencies: []string{

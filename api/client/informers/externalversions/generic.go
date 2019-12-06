@@ -64,6 +64,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().APIKeys().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("apisigningkeys"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().APISigningKeys().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("categories"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Categories().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("configmaps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().ConfigMaps().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("localidentities"):
