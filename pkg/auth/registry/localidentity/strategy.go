@@ -97,6 +97,10 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if localIdentity.Name == "" && localIdentity.GenerateName == "" {
 		localIdentity.GenerateName = "usr-"
 	}
+
+	localIdentity.Spec.Finalizers = []auth.FinalizerName{
+		auth.LocalIdentityFinalize,
+	}
 }
 
 // Validate validates a new identity.

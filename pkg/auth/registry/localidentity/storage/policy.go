@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"strings"
 
 	"github.com/casbin/casbin/v2"
@@ -39,6 +40,8 @@ import (
 
 // PolicyREST implements the REST endpoint, list policies bound to the user.
 type PolicyREST struct {
+	*registry.Store
+
 	authClient authinternalclient.AuthInterface
 	enforcer   *casbin.SyncedEnforcer
 }

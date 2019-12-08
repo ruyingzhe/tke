@@ -725,6 +725,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/auth/v1.CategorySpec":                                    schema_tke_api_auth_v1_CategorySpec(ref),
 		"tkestack.io/tke/api/auth/v1.ConfigMap":                                       schema_tke_api_auth_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/auth/v1.ConfigMapList":                                   schema_tke_api_auth_v1_ConfigMapList(ref),
+		"tkestack.io/tke/api/auth/v1.Group":                                           schema_tke_api_auth_v1_Group(ref),
+		"tkestack.io/tke/api/auth/v1.GroupList":                                       schema_tke_api_auth_v1_GroupList(ref),
+		"tkestack.io/tke/api/auth/v1.GroupSpec":                                       schema_tke_api_auth_v1_GroupSpec(ref),
+		"tkestack.io/tke/api/auth/v1.GroupStatus":                                     schema_tke_api_auth_v1_GroupStatus(ref),
 		"tkestack.io/tke/api/auth/v1.LocalIdentity":                                   schema_tke_api_auth_v1_LocalIdentity(ref),
 		"tkestack.io/tke/api/auth/v1.LocalIdentityList":                               schema_tke_api_auth_v1_LocalIdentityList(ref),
 		"tkestack.io/tke/api/auth/v1.LocalIdentitySpec":                               schema_tke_api_auth_v1_LocalIdentitySpec(ref),
@@ -33665,7 +33669,7 @@ func schema_tke_api_auth_v1_APIKeyList(ref common.ReferenceCallback) common.Open
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "LocalIdentityList is the whole list of all identities.",
+				Description: "APIKeyList is the whole list of all identities.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -34145,7 +34149,8 @@ func schema_tke_api_auth_v1_CategorySpec(ref common.ReferenceCallback) common.Op
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "CategorySpec is a description of category.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"categoryName": {
 						SchemaProps: spec.SchemaProps{
@@ -34298,6 +34303,186 @@ func schema_tke_api_auth_v1_ConfigMapList(ref common.ReferenceCallback) common.O
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/auth/v1.ConfigMap"},
+	}
+}
+
+func schema_tke_api_auth_v1_Group(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Group represents a group of users.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec defines the desired identities of group document in this set.",
+							Ref:         ref("tkestack.io/tke/api/auth/v1.GroupSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/auth/v1.GroupStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/auth/v1.GroupSpec", "tkestack.io/tke/api/auth/v1.GroupStatus"},
+	}
+}
+
+func schema_tke_api_auth_v1_GroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GroupList is the whole list of all groups.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of rules.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Group"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/auth/v1.Group"},
+	}
+}
+
+func schema_tke_api_auth_v1_GroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GroupSpec is a description of group.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"finalizers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"displayName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"tenantID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Creator",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"displayName", "tenantID", "username", "description"},
+			},
+		},
+	}
+}
+
+func schema_tke_api_auth_v1_GroupStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GroupStatus represents information about the status of a group.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"subjects": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Subjects represents the members of the group.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Subject"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"subjects"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/auth/v1.Subject"},
 	}
 }
 
@@ -34636,7 +34821,7 @@ func schema_tke_api_auth_v1_PolicySpec(ref common.ReferenceCallback) common.Open
 							},
 						},
 					},
-					"policyName": {
+					"displayName": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -34684,7 +34869,7 @@ func schema_tke_api_auth_v1_PolicySpec(ref common.ReferenceCallback) common.Open
 						},
 					},
 				},
-				Required: []string{"policyName", "tenantID", "category", "type", "username", "statement"},
+				Required: []string{"displayName", "tenantID", "category", "type", "username", "statement"},
 			},
 		},
 		Dependencies: []string{
@@ -34770,7 +34955,7 @@ func schema_tke_api_auth_v1_RuleList(ref common.ReferenceCallback) common.OpenAP
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "RuleList is the whole list of all policies.",
+				Description: "RuleList is the whole list of all rules.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -34818,7 +35003,7 @@ func schema_tke_api_auth_v1_RuleSpec(ref common.ReferenceCallback) common.OpenAP
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "RuleSpec is a description of a policy.",
+				Description: "RuleSpec is a description of a rule.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"ptype": {
@@ -35791,7 +35976,7 @@ func schema_tke_api_business_v1_ProjectSpec(ref common.ReferenceCallback) common
 					},
 					"members": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Members represents the user list of project.",
+							Description: "Subjects represents the user list of project.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

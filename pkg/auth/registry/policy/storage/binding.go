@@ -73,7 +73,7 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 		}
 	}
 
-	log.Info("policies", log.Any("subjects", policy.Status.Subjects))
+	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("subjects", policy.Status.Subjects))
 
 	return r.authClient.Policies().UpdateStatus(policy)
 }

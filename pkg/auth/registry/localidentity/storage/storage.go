@@ -33,10 +33,10 @@ import (
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	storageerr "k8s.io/apiserver/pkg/storage/errors"
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -51,6 +51,7 @@ type Storage struct {
 	LocalIdentity *REST
 	Status        *StatusREST
 	Policy        *PolicyREST
+	Group         *GroupREST
 	Finalize      *FinalizeREST
 }
 
@@ -68,8 +69,6 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 
-		// TODO If remove hashedpassword, internal check password will failed.
-		//Decorator:     localidentity.Decorator,
 		PredicateFunc: localidentity.MatchLocalIdentity,
 	}
 	options := &generic.StoreOptions{
@@ -92,8 +91,9 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 	return &Storage{
 		LocalIdentity: &REST{store, privilegedUsername},
 		Status:        &StatusREST{&statusStore},
+		Policy:        &PolicyREST{store, authClient, policyEnforcer.Enforcer},
+		Group:         &GroupREST{store, authClient, policyEnforcer.Enforcer},
 		Finalize:      &FinalizeREST{&finalizeStore},
-		Policy:        &PolicyREST{authClient, policyEnforcer.Enforcer},
 	}
 }
 
