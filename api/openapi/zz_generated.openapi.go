@@ -719,6 +719,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/auth/v1.APISigningKey":                                   schema_tke_api_auth_v1_APISigningKey(ref),
 		"tkestack.io/tke/api/auth/v1.APISigningKeyList":                               schema_tke_api_auth_v1_APISigningKeyList(ref),
 		"tkestack.io/tke/api/auth/v1.Action":                                          schema_tke_api_auth_v1_Action(ref),
+		"tkestack.io/tke/api/auth/v1.AllowedStatus":                                   schema_tke_api_auth_v1_AllowedStatus(ref),
 		"tkestack.io/tke/api/auth/v1.Binding":                                         schema_tke_api_auth_v1_Binding(ref),
 		"tkestack.io/tke/api/auth/v1.Category":                                        schema_tke_api_auth_v1_Category(ref),
 		"tkestack.io/tke/api/auth/v1.CategoryList":                                    schema_tke_api_auth_v1_CategoryList(ref),
@@ -733,11 +734,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/auth/v1.LocalIdentityList":                               schema_tke_api_auth_v1_LocalIdentityList(ref),
 		"tkestack.io/tke/api/auth/v1.LocalIdentitySpec":                               schema_tke_api_auth_v1_LocalIdentitySpec(ref),
 		"tkestack.io/tke/api/auth/v1.LocalIdentityStatus":                             schema_tke_api_auth_v1_LocalIdentityStatus(ref),
+		"tkestack.io/tke/api/auth/v1.NonResourceAttributes":                           schema_tke_api_auth_v1_NonResourceAttributes(ref),
 		"tkestack.io/tke/api/auth/v1.Policy":                                          schema_tke_api_auth_v1_Policy(ref),
 		"tkestack.io/tke/api/auth/v1.PolicyBinding":                                   schema_tke_api_auth_v1_PolicyBinding(ref),
 		"tkestack.io/tke/api/auth/v1.PolicyList":                                      schema_tke_api_auth_v1_PolicyList(ref),
 		"tkestack.io/tke/api/auth/v1.PolicySpec":                                      schema_tke_api_auth_v1_PolicySpec(ref),
 		"tkestack.io/tke/api/auth/v1.PolicyStatus":                                    schema_tke_api_auth_v1_PolicyStatus(ref),
+		"tkestack.io/tke/api/auth/v1.ResourceAttributes":                              schema_tke_api_auth_v1_ResourceAttributes(ref),
 		"tkestack.io/tke/api/auth/v1.Role":                                            schema_tke_api_auth_v1_Role(ref),
 		"tkestack.io/tke/api/auth/v1.RoleList":                                        schema_tke_api_auth_v1_RoleList(ref),
 		"tkestack.io/tke/api/auth/v1.RoleSpec":                                        schema_tke_api_auth_v1_RoleSpec(ref),
@@ -747,6 +750,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/auth/v1.RuleSpec":                                        schema_tke_api_auth_v1_RuleSpec(ref),
 		"tkestack.io/tke/api/auth/v1.Statement":                                       schema_tke_api_auth_v1_Statement(ref),
 		"tkestack.io/tke/api/auth/v1.Subject":                                         schema_tke_api_auth_v1_Subject(ref),
+		"tkestack.io/tke/api/auth/v1.SubjectAccessReview":                             schema_tke_api_auth_v1_SubjectAccessReview(ref),
+		"tkestack.io/tke/api/auth/v1.SubjectAccessReviewSpec":                         schema_tke_api_auth_v1_SubjectAccessReviewSpec(ref),
+		"tkestack.io/tke/api/auth/v1.SubjectAccessReviewStatus":                       schema_tke_api_auth_v1_SubjectAccessReviewStatus(ref),
 		"tkestack.io/tke/api/business/v1.ConfigMap":                                   schema_tke_api_business_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/business/v1.ConfigMapList":                               schema_tke_api_business_v1_ConfigMapList(ref),
 		"tkestack.io/tke/api/business/v1.HardQuantity":                                schema_tke_api_business_v1_HardQuantity(ref),
@@ -34020,6 +34026,62 @@ func schema_tke_api_auth_v1_Action(ref common.ReferenceCallback) common.OpenAPID
 	}
 }
 
+func schema_tke_api_auth_v1_AllowedStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "AllowedStatus includes the resource access request and response.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resource is the resource of request",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"web": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Verb is the verb of request",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"allowed": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Allowed is required. True if the action would be allowed, false otherwise.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"denied": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Denied is optional. True if the action would be denied, otherwise false. If both allowed is false and denied is false, then the authorizer has no opinion on whether to authorize the action. Denied may not be true if Allowed is true.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reason is optional.  It indicates why a request was allowed or denied.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"evaluationError": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EvaluationError is an indication that some error occurred during the authorization check. It is entirely possible to get an error and be able to continue determine authorization status in spite of it. For instance, RBAC can be missing a role, but enough roles are still present and bound to reason about the request.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"resource", "web", "allowed"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_auth_v1_Binding(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -34713,6 +34775,33 @@ func schema_tke_api_auth_v1_LocalIdentityStatus(ref common.ReferenceCallback) co
 	}
 }
 
+func schema_tke_api_auth_v1_NonResourceAttributes(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NonResourceAttributes includes the authorization attributes available for non-resource requests to the Authorizer interface",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the URL path of the request",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"verb": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Verb is the standard HTTP verb",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_tke_api_auth_v1_Policy(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -34954,6 +35043,68 @@ func schema_tke_api_auth_v1_PolicyStatus(ref common.ReferenceCallback) common.Op
 		},
 		Dependencies: []string{
 			"tkestack.io/tke/api/auth/v1.Subject"},
+	}
+}
+
+func schema_tke_api_auth_v1_ResourceAttributes(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ResourceAttributes includes the authorization attributes available for resource requests to the Authorizer interface",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace is the namespace of the action being requested.  Currently, there is no distinction between no namespace and all namespaces \"\" (empty) is defaulted for LocalSubjectAccessReviews \"\" (empty) is empty for cluster-scoped resources \"\" (empty) means \"all\" for namespace scoped resources from a SubjectAccessReview or SelfSubjectAccessReview",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"verb": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Verb is a kubernetes resource API verb, like: get, list, watch, create, update, delete, proxy.  \"*\" means all.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Group is the API Group of the Resource.  \"*\" means all.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Version is the API Version of the Resource.  \"*\" means all.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resource is one of the existing resource types.  \"*\" means all.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"subresource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Subresource is one of the existing resource types.  \"\" means none.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name is the name of the resource being requested for a \"get\" or deleted for a \"delete\". \"\" (empty) means all.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -35370,6 +35521,200 @@ func schema_tke_api_auth_v1_Subject(ref common.ReferenceCallback) common.OpenAPI
 				Required: []string{"id", "name"},
 			},
 		},
+	}
+}
+
+func schema_tke_api_auth_v1_SubjectAccessReview(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SubjectAccessReview checks whether or not a user or group can perform an action.  Not filling in a spec.namespace means \"in all namespaces\".",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec holds information about the request being evaluated",
+							Ref:         ref("tkestack.io/tke/api/auth/v1.SubjectAccessReviewSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Status is filled in by the server and indicates whether the request is allowed or not",
+							Ref:         ref("tkestack.io/tke/api/auth/v1.SubjectAccessReviewStatus"),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/auth/v1.SubjectAccessReviewSpec", "tkestack.io/tke/api/auth/v1.SubjectAccessReviewStatus"},
+	}
+}
+
+func schema_tke_api_auth_v1_SubjectAccessReviewSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SubjectAccessReviewSpec is a description of the access request.  Exactly one of ResourceAttributes and NonResourceAttributes must be set",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"resourceAttributes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ResourceAttributes describes information for a resource access request",
+							Ref:         ref("tkestack.io/tke/api/auth/v1.ResourceAttributes"),
+						},
+					},
+					"resourceAttributesList": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ResourceAttributesList describes information for multi resource access request.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.ResourceAttributes"),
+									},
+								},
+							},
+						},
+					},
+					"nonResourceAttributes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NonResourceAttributes describes information for a non-resource access request",
+							Ref:         ref("tkestack.io/tke/api/auth/v1.NonResourceAttributes"),
+						},
+					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Description: "User is the user you're testing for. If you specify \"User\" but not \"Groups\", then is it interpreted as \"What if User were not a member of any groups",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"groups": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Groups is the groups you're testing for.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"extra": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer it needs a reflection here.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"string"},
+													Format: "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UID information about the requesting user.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/auth/v1.NonResourceAttributes", "tkestack.io/tke/api/auth/v1.ResourceAttributes"},
+	}
+}
+
+func schema_tke_api_auth_v1_SubjectAccessReviewStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SubjectAccessReviewStatus represents the current state of a SubjectAccessReview.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"allowed": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Allowed is required. True if the action would be allowed, false otherwise.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"denied": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Denied is optional. True if the action would be denied, otherwise false. If both allowed is false and denied is false, then the authorizer has no opinion on whether to authorize the action. Denied may not be true if Allowed is true.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reason is optional.  It indicates why a request was allowed or denied.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"evaluationError": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EvaluationError is an indication that some error occurred during the authorization check. It is entirely possible to get an error and be able to continue determine authorization status in spite of it. For instance, RBAC can be missing a role, but enough roles are still present and bound to reason about the request.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"allowedList": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AllowedList is the allowed response for batch authorization request.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.AllowedStatus"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"allowed"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/auth/v1.AllowedStatus"},
 	}
 }
 
