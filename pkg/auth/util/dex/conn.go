@@ -19,10 +19,11 @@
 package dex
 
 import (
+	"fmt"
+
 	dexstorage "github.com/dexidp/dex/storage"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
@@ -34,15 +35,7 @@ type conn struct {
 }
 
 func (c *conn) CreateConnector(connector dexstorage.Connector) error {
-	idp := fromDexConnector(connector)
-	_, err := c.authClient.IdentityProviders().Create(idp)
-	if err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			return dexstorage.ErrAlreadyExists
-		}
-		return err
-	}
-	return nil
+	return fmt.Errorf("not support CreateConnector, please use identityproviders api")
 }
 
 func (c *conn) GetConnector(id string) (conn dexstorage.Connector, err error) {

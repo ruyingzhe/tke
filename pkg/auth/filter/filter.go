@@ -193,16 +193,21 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 		resourceType = resourceTypeSingle
 	}
 
-	// if not specify resource name in path, set it to "*" (all)
-	if len(resourceName) == 0 {
-		resourceName = "*"
+	if tkeAttribs.ResourceRequest {
+		// if not specify resource name in path, set it to "*" (all)
+		if len(resourceName) == 0 {
+			resourceName = "*"
+		}
+
+		// URL forms: GET /users/jack/policies,  parsed into verb: getUserPolicies, resource: users:jack/policies:*
+		tkeAttribs.Verb = fmt.Sprintf("%s%s%s", verb, upperFirst(resourceType), upperFirst(subResource))
+		tkeAttribs.Resource = fmt.Sprintf("%s:%s", resourceTypeSingle, resourceName)
+	} else {
+		tkeAttribs.Verb = verb
+		tkeAttribs.Resource = resourceType
 	}
 
-	// URL forms: GET /users/jack/policies,  parsed into verb: getUserPolicies, resource: users:jack/policies:*
-	tkeAttribs.Verb = fmt.Sprintf("%s%s%s", verb, upperFirst(resourceType), upperFirst(subResource))
-	tkeAttribs.Resource = fmt.Sprintf("%s:%s", resourceTypeSingle, resourceName)
-
-	if tkeAttribs.Namespace != "" {
+	if tkeAttribs.Namespace != "" && resourceTypeSingle != "namespace" {
 		tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
 	}
 
@@ -210,7 +215,7 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 		clusterName = filter.ClusterFrom(ctx)
 	}
 
-	if len(clusterName) != 0 {
+	if clusterName != "" && resourceTypeSingle != "cluster" {
 		tkeAttribs.Resource = fmt.Sprintf("cluster:%s/%s", clusterName, tkeAttribs.Resource)
 	}
 

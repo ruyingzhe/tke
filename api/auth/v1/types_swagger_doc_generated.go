@@ -237,11 +237,20 @@ func (GroupList) SwaggerDoc() map[string]string {
 }
 
 var map_GroupSpec = map[string]string{
-	"": "GroupSpec is a description of an Group.",
+	"": "GroupSpec is a description of a Group.",
 }
 
 func (GroupSpec) SwaggerDoc() map[string]string {
 	return map_GroupSpec
+}
+
+var map_GroupStatus = map[string]string{
+	"":      "GroupStatus represents information about the status of a group.",
+	"users": "Users represents the members of the group.",
+}
+
+func (GroupStatus) SwaggerDoc() map[string]string {
+	return map_GroupStatus
 }
 
 var map_IdentityProvider = map[string]string{
@@ -263,10 +272,11 @@ func (IdentityProviderList) SwaggerDoc() map[string]string {
 }
 
 var map_IdentityProviderSpec = map[string]string{
-	"":       "IdentityProviderSpec is a description of an identity provider.",
-	"name":   "The Name of the connector that is used when displaying it to the end user.",
-	"type":   "The type of the connector. E.g. 'oidc' or 'ldap'",
-	"config": "Config holds all the configuration information specific to the connector type. Since there no generic struct we can use for this purpose, it is stored as a json string.",
+	"":               "IdentityProviderSpec is a description of an identity provider.",
+	"name":           "The Name of the connector that is used when displaying it to the end user.",
+	"type":           "The type of the connector. E.g. 'oidc' or 'ldap'",
+	"administrators": "The administrators means the users is super admin for the idp.",
+	"config":         "Config holds all the configuration information specific to the connector type. Since there no generic struct we can use for this purpose, it is stored as a json string.",
 }
 
 func (IdentityProviderSpec) SwaggerDoc() map[string]string {
