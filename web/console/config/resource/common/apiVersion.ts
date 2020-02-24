@@ -30,6 +30,7 @@ export interface ApiVersion {
   pvc?: ResourceApiInfo;
   sc?: ResourceApiInfo;
   hpa?: ResourceApiInfo;
+  cronhpa?: ResourceApiInfo;
   event?: ResourceApiInfo;
   node?: ResourceApiInfo;
   masteretcd?: ResourceApiInfo;
@@ -173,6 +174,35 @@ const k8sApiVersionFor17: ApiVersion = {
   }
 };
 
+/** ================== start 1.14 的apiversion配置 ======================== */
+const k8sApiVersionFor114: ApiVersion = {
+  deployment: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'Deployment'
+  },
+  statefulset: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'StatefulSet'
+  },
+  daemonset: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'DaemonSet'
+  },
+  rs: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'ReplicaSet'
+  }
+};
+/** ================== start 1.14 的apiversion配置 ======================== */
+
 /** 以1.8的为基准，后续有新增再继续更改 */
 const k8sApiVersionFor18: ApiVersion = {
   deployment: {
@@ -282,6 +312,12 @@ const k8sApiVersionFor18: ApiVersion = {
     version: 'v2beta1',
     basicEntry: 'apis',
     headTitle: 'HorizontalPodAutoscaler'
+  },
+  cronhpa: {
+    group: 'extensions.tkestack.io',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'CronHPA'
   },
   event: {
     group: '',
@@ -677,5 +713,6 @@ const basicApiVersion = Object.assign(
  */
 export const apiVersion: FinalApiVersion = {
   '1.8': basicApiVersion,
-  '1.7': Object.assign({}, basicApiVersion, k8sApiVersionFor17)
+  '1.7': Object.assign({}, basicApiVersion, k8sApiVersionFor17),
+  '1.14': Object.assign({}, basicApiVersion, k8sApiVersionFor114)
 };

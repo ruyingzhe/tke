@@ -726,7 +726,9 @@ func (t *TKE) SetConfigDefault(config *Config) {
 	}
 
 	if config.Registry.TKERegistry != nil {
-		config.Registry.TKERegistry.Domain = "registry.tke.com"
+		if config.Registry.TKERegistry.Domain == "" {
+			config.Registry.TKERegistry.Domain = "registry.tke.com"
+		}
 		config.Registry.TKERegistry.Namespace = "library"
 		config.Registry.TKERegistry.Username = config.Basic.Username
 		config.Registry.TKERegistry.Password = config.Basic.Password
@@ -881,17 +883,20 @@ func (t *TKE) ValidateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 	return nil
 }
 
-func (t *TKE) initProviderConfig() error {
+func (t *TKE) completeProviderConfigForRegistry() error {
 	c, err := baremetalconfig.New(pluginConfigFile)
 	if err != nil {
 		return err
 	}
 	c.Registry.Prefix = t.Para.Config.Registry.Prefix()
-	ip, err := util.GetExternalIP()
-	if err != nil {
-		return pkgerrors.Wrap(err, "get external ip error")
+
+	if t.Para.Config.Registry.TKERegistry != nil {
+		ip, err := util.GetExternalIP()
+		if err != nil {
+			return pkgerrors.Wrap(err, "get external ip error")
+		}
+		c.Registry.IP = ip
 	}
-	c.Registry.IP = ip
 
 	return c.Save(pluginConfigFile)
 }
@@ -1104,10 +1109,11 @@ func (t *TKE) prepareFrontProxyCertificates() error {
 }
 
 func (t *TKE) createGlobalCluster() error {
-	err := t.initProviderConfig()
+	err := t.completeProviderConfigForRegistry()
 	if err != nil {
 		return err
 	}
+
 	// do again like platform controller
 	t.completeWithProvider()
 
@@ -1511,7 +1517,6 @@ func (t *TKE) installTKEAuthAPI() error {
 		"Image":            images.Get().TKEAuthAPI.FullName(),
 		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
 		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
-		"AdminPassword":    string(t.Para.Config.Auth.TKEAuth.Password),
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
 	}
@@ -1880,7 +1885,7 @@ func (t *TKE) preparePushImagesToTKERegistry() error {
 func (t *TKE) registerAPI() error {
 	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
 
-	restConfig, err := platformutil.GetRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
+	restConfig, err := platformutil.GetExternalRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}
@@ -1953,7 +1958,7 @@ func (t *TKE) registerAPI() error {
 }
 
 func (t *TKE) importResource() error {
-	restConfig, err := platformutil.GetRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
+	restConfig, err := platformutil.GetExternalRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}
