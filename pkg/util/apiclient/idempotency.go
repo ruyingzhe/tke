@@ -336,6 +336,19 @@ func CreateOrUpdateEndpoints(client clientset.Interface, ep *v1.Endpoints) error
 	return nil
 }
 
+func CreateOrUpdatePVC(client clientset.Interface, pvc *v1.PersistentVolumeClaim) error {
+	if _, err := client.CoreV1().PersistentVolumeClaims(pvc.ObjectMeta.Namespace).Create(pvc); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return errors.Wrap(err, "unable to create pvc")
+		}
+
+		if _, err := client.CoreV1().PersistentVolumeClaims(pvc.ObjectMeta.Namespace).Update(pvc); err != nil {
+			return errors.Wrap(err, "unable to update pvc")
+		}
+	}
+	return nil
+}
+
 // CreateOrUpdateIngress creates a Ingress if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
 func CreateOrUpdateIngress(client clientset.Interface, ing *extensionsv1beta1.Ingress) error {
 	if _, err := client.ExtensionsV1beta1().Ingresses(ing.ObjectMeta.Namespace).Create(ing); err != nil {

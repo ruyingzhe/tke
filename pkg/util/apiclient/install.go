@@ -173,6 +173,17 @@ func init() {
 		}
 		return nil
 	}
+	handlers["PersistentVolumeClaim"] = func(client kubernetes.Interface, data []byte) error {
+		obj := new(corev1.PersistentVolumeClaim)
+		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
+			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
+		}
+		err := CreateOrUpdatePVC(client, obj)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 
 	// extentions
 	handlers["Ingress"] = func(client kubernetes.Interface, data []byte) error {

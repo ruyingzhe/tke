@@ -100,6 +100,7 @@ const (
 	localRegistryPort          = 5000
 	localRegistryContainerName = "tcr"
 	defaultTeantID             = "default"
+	globalStorageClass         = "global-storageclass"
 )
 
 // ClusterResource is the REST layer to the Cluster domain
@@ -196,6 +197,7 @@ type TKERegistry struct {
 	Namespace string `json:"namespace"`
 	Username  string `json:"username"`
 	Password  []byte `json:"password"`
+	Size      string `json:"size,omitempty"`
 }
 
 type ThirdPartyRegistry struct {
@@ -422,6 +424,18 @@ func (t *TKE) initSteps() {
 		},
 	}...)
 
+	if t.Para.Config.Monitor != nil {
+		if t.Para.Config.Monitor.InfluxDBMonitor != nil &&
+			t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
+			t.steps = append(t.steps, []handler{
+				{
+					Name: "Install InfluxDB",
+					Func: t.installInfluxDB,
+				},
+			}...)
+		}
+	}
+
 	if t.Para.Config.Auth.TKEAuth != nil {
 		t.steps = append(t.steps, []handler{
 			{
@@ -469,15 +483,6 @@ func (t *TKE) initSteps() {
 	}
 
 	if t.Para.Config.Monitor != nil {
-		if t.Para.Config.Monitor.InfluxDBMonitor != nil &&
-			t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-			t.steps = append(t.steps, []handler{
-				{
-					Name: "Install InfluxDB",
-					Func: t.installInfluxDB,
-				},
-			}...)
-		}
 		t.steps = append(t.steps, []handler{
 			{
 				Name: "Install tke-monitor-api",
@@ -1595,6 +1600,12 @@ func (t *TKE) installTKEPlatformController() error {
 			params["MonitorStorageType"] = "influxdb"
 			if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.servers[0])
+				if t.checkGlobalHA()  {
+					influxdbIp, err := apiclient.GetGlusterIP(t.globalClient, t.namespace, "influxdb")
+					if err == nil {
+						params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", influxdbIp)
+					}
+				}
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
 				address := t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username != "" {
@@ -1680,30 +1691,17 @@ func (t *TKE) installTKEBusinessController() error {
 	})
 }
 
-func (t *TKE) checkGlobalStorageclass() error {
-	var err error
-	cmd := exec.Command("sh", "-c",
-		fmt.Sprintf("kubectl get sc global-storageclass "),
-	)
-	if err := cmd.Run(); err != nil {
-		return pkgerrors.Wrap(err, "global-storageclass is not defined ")
-	}
-	return err
+func (t *TKE) checkGlobalHA() bool {
+	_, err := apiclient.CheckStorageClass(t.globalClient, globalStorageClass)
+	return err == nil
 }
 
 func (t *TKE) installInfluxDB() error {
-	enableGSC := t.checkGlobalStorageclass()
 	params := map[string]interface{}{
 		"Image":      images.Get().InfluxDB.FullName(),
 		"NodeName":   t.servers[0],
-		"EnableGSC": enableGSC == nil,
-	}
-	if t.checkGlobalStorageclass() != nil {
-		if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor.Size == "" {
-			params["InfluxdbSize"] = "10Gi"
-		} else {
-			params["InfluxdbSize"] = t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor.Size
-		}
+		"EnableGSC":  t.checkGlobalHA(),
+		"InfluxdbSize": t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor.Size,
 	}
 	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/influxdb/*.yaml",
 		params)
@@ -1746,6 +1744,12 @@ func (t *TKE) installTKEMonitorAPI() error {
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				// todo
 				options["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
+				if t.checkGlobalHA()  {
+					influxdbIp, err := apiclient.GetGlusterIP(t.globalClient, t.namespace, "influxdb")
+					if err == nil {
+						options["StorageAddress"] = fmt.Sprintf("http://%s:8086", influxdbIp)
+					}
+				}
 			}
 		}
 	}
@@ -1784,6 +1788,12 @@ func (t *TKE) installTKEMonitorController() error {
 				params["StoragePassword"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				params["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
+				if t.checkGlobalHA()  {
+					influxdbIp, err := apiclient.GetGlusterIP(t.globalClient, t.namespace, "influxdb")
+					if err == nil {
+						params["StorageAddress"] = fmt.Sprintf("http://%s:8086", influxdbIp)
+					}
+				}
 			}
 		}
 	}
@@ -1853,6 +1863,8 @@ func (t *TKE) installTKERegistryAPI() error {
 		"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
 		"EnableAuth":    t.Para.Config.Auth.TKEAuth != nil,
 		"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
+		"EnableGSC":  t.checkGlobalHA(),
+		"RegistrySize": t.Para.Config.Registry.TKERegistry.Size,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID

@@ -1,3 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+  namespace: tke
+  labels:
+    app: influxdb
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8086
+      name: api
+  selector:
+    app: influxdb
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -34,23 +50,28 @@ spec:
           mountPath: /var/lib/influxdb
           subPath:
       hostNetwork: true
-      {{- if .EnableGSC }}
-      volumeClaimTemplates:
-        - metadata:
-            creationTimestamp: null
-            name: data
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            resources:
-              requests:
-                storage: {{ .InfluxdbSize }}
-            storageClassName: rook-ceph-block
-      {{- else }}
+{{- if .EnableGSC }}
+  volumeClaimTemplates:
+  - metadata:
+      creationTimestamp: null
+      name: data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+  {{- if .InfluxdbSize }}
+          storage: {{ .InfluxdbSize }}
+  {{- else }}
+          storage: "10Gi"
+  {{- end }} 
+      storageClassName: global-storageclass
+{{- else }}
       nodeName: {{ .NodeName }}
       volumes:
-        - name: data
-          hostPath:
-            path: /var/lib/influxdb
-            type: DirectoryOrCreate
-      {{- end }}
+      - name: data
+        hostPath:
+          path: /var/lib/influxdb
+          type: DirectoryOrCreate
+{{- end }}
+

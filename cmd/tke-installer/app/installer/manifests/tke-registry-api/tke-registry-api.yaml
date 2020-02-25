@@ -69,8 +69,19 @@ spec:
             requests:
               cpu: 250m
               memory: 256Mi
+{{- if .EnableGSC }}
+      volumes:
+      - name: registry-data
+        persistentVolumeClaim:
+          claimName: global-registry-pvc
+{{- else }}
       nodeName: {{ .NodeName }}
       volumes:
+        - name: registry-data
+          hostPath:
+            path: /storage
+            type: DirectoryOrCreate
+{{- end }}
         - name: certs-volume
           configMap:
             name: certs
@@ -78,13 +89,27 @@ spec:
           configMap:
             name: tke-registry-api
         - name: registry-data
-          hostPath:
-            path: /storage
-            type: DirectoryOrCreate
         - name: tke-registry-api-secret
           secret:
             secretName: tke-registry-api
-
+---
+{{- if .EnableGSC }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: global-registry-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+  {{- if .RegistrySize }}
+      storage: {{ .RegistrySize }}
+  {{- else }}
+      storage: "10Gi"
+  {{- end }} 
+  storageClassName: global-storageclass
+{{- end }}
 ---
 apiVersion: v1
 kind: Secret
@@ -189,3 +214,4 @@ data:
         cluster: tke
         user: admin-cert
       name: tke
+

@@ -130,6 +130,22 @@ func CheckDaemonset(client kubernetes.Interface, namespace string, name string) 
 	return true, nil
 }
 
+func CheckStorageClass(client kubernetes.Interface, name string) (bool, error) {
+	_, err := client.StorageV1beta1().StorageClasses().Get(name, metav1.GetOptions{})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func GetGlusterIP(client kubernetes.Interface, namespace string, name string) (string, error) {
+	svc, err := client.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	return svc.Spec.ClusterIP, nil
+}
+
 // IsPodReady returns true if a pod is ready; false otherwise.
 func IsPodReady(pod *corev1.Pod) bool {
 	return isPodReadyConditionTrue(pod.Status)
