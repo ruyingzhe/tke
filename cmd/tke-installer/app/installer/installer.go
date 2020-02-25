@@ -225,6 +225,7 @@ type InfluxDBMonitor struct {
 }
 
 type LocalInfluxDBMonitor struct {
+	Size string  `json:"size,omitempty"`
 }
 
 type ExternalInfluxDBMonitor struct {
@@ -1679,12 +1680,33 @@ func (t *TKE) installTKEBusinessController() error {
 	})
 }
 
+func (t *TKE) checkGlobalStorageclass() error {
+	var err error
+	cmd := exec.Command("sh", "-c",
+		fmt.Sprintf("kubectl get sc global-storageclass "),
+	)
+	if err := cmd.Run(); err != nil {
+		return pkgerrors.Wrap(err, "global-storageclass is not defined ")
+	}
+	return err
+}
+
 func (t *TKE) installInfluxDB() error {
+	enableGSC := t.checkGlobalStorageclass()
+	params := map[string]interface{}{
+		"Image":      images.Get().InfluxDB.FullName(),
+		"NodeName":   t.servers[0],
+		"EnableGSC": enableGSC == nil,
+	}
+	if t.checkGlobalStorageclass() != nil {
+		if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor.Size == "" {
+			params["InfluxdbSize"] = "10Gi"
+		} else {
+			params["InfluxdbSize"] = t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor.Size
+		}
+	}
 	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/influxdb/*.yaml",
-		map[string]interface{}{
-			"Image":    images.Get().InfluxDB.FullName(),
-			"NodeName": t.servers[0],
-		})
+		params)
 	if err != nil {
 		return err
 	}
