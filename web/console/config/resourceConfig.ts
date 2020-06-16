@@ -1,3 +1,4 @@
+import { auth_project } from './resource/k8sConfig/otherResource';
 import {
   deployment,
   statefulset,
@@ -47,6 +48,7 @@ import {
   addon_volumedecorator,
   addon_ipam,
   alarmPolicy,
+  alarmRecord,
   helm,
   notifyChannel,
   notifyTemplate,
@@ -180,11 +182,13 @@ export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey =
     role: getResourceConfig(role, finalK8sVersion),
     localgroup: getResourceConfig(localgroup, finalK8sVersion),
     group: getResourceConfig(group, finalK8sVersion),
+    auth_project: getResourceConfig(auth_project, finalK8sVersion),
     /** =============== 这里是权限相关的 =============== */
 
     /** 告警配置 */
     prometheus: getResourceConfig(prometheus, finalK8sVersion),
     alarmPolicy: getResourceConfig(alarmPolicy, finalK8sVersion),
+    alarmRecord: getResourceConfig(alarmRecord, finalK8sVersion),
 
     /** 告警通知 */
     channel: getResourceConfig(notifyChannel, finalK8sVersion),

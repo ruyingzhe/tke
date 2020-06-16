@@ -49,6 +49,7 @@ export interface ApiVersion {
   helm?: ResourceApiInfo;
   logcs?: ResourceApiInfo;
   clustercredential?: ResourceApiInfo;
+  auth_project?: ResourceApiInfo;
 
   lbcf?: ResourceApiInfo;
   lbcf_bg?: ResourceApiInfo;
@@ -90,6 +91,7 @@ export interface ApiVersion {
   /** 告警配置 */
   prometheus?: ResourceApiInfo;
   alarmPolicy?: ResourceApiInfo;
+  alarmRecord?: ResourceApiInfo;
   channel?: ResourceApiInfo;
   template?: ResourceApiInfo;
   message?: ResourceApiInfo;
@@ -387,6 +389,13 @@ const k8sApiVersionFor18: ApiVersion = {
     basicEntry: authServerVersion.basicUrl,
     watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Users'
+  },
+  auth_project: {
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
+    headTitle: 'PorjectUsers'
   },
   role: {
     group: authServerVersion.group,
@@ -697,6 +706,13 @@ const alarmPolicyApiVersion: ApiVersion = {
     watchModule: ConsoleModuleEnum.Monitor,
     headTitle: 'AlarmPolicy'
   },
+  alarmRecord: {
+    group: notifyServerVersion.group,
+    version: notifyServerVersion.version,
+    basicEntry: notifyServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Notify,
+    headTitle: 'AlarmRecord'
+  },
   prometheus: {
     group: apiServerVersion.group,
     version: apiServerVersion.version,
@@ -726,7 +742,6 @@ const notifyApiVersion: ApiVersion = {
     version: notifyServerVersion.version,
     basicEntry: notifyServerVersion.basicUrl,
     watchModule: ConsoleModuleEnum.Notify,
-
     headTitle: 'Message'
   },
   receiver: {

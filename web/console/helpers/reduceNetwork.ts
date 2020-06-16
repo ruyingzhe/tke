@@ -2,6 +2,8 @@ import axios from 'axios';
 import { OperationResult } from '@tencent/ff-redux';
 import { RequestParams, ResourceInfo } from '../src/modules/common/models';
 import { changeForbiddentConfig } from '../index';
+import { parseQueryString } from './urlUtil';
+import { getProjectName } from './appUtil';
 
 /** 是否展示没有权限的弹窗 */
 export let Init_Forbiddent_Config = {
@@ -71,7 +73,7 @@ export const requestMethodForAction = (type: string) => {
  * 统一的请求处理
  * @param userParams: RequestParams
  */
-export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?: string, projectId?: string, keyword?: string) => {
+export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?: string, keyword?: string) => {
   let {
     method,
     url,
@@ -89,11 +91,28 @@ export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?
       'X-TKE-ClusterName': clusterId
     });
   }
-  if (projectId) {
+  if (keyword) {
     userDefinedHeader = Object.assign({}, userDefinedHeader, {
-      'X-TKE-ProjectName': projectId
+      'X-TKE-FuzzyResourceName': keyword
     });
   }
+
+  /// #if project
+  let searchParams;
+  try {
+    searchParams = parseQueryString(location.search);
+  } catch (error) {}
+  let projectId = '';
+  if (searchParams && (searchParams.projectName || searchParams.projectId)) {
+    projectId = searchParams.projectName || searchParams.projectId;
+  } else {
+    projectId = getProjectName();
+  }
+  userDefinedHeader = Object.assign({}, userDefinedHeader, {
+    'X-TKE-ProjectName': projectId
+  });
+  /// #endif
+
   if (keyword) {
     userDefinedHeader = Object.assign({}, userDefinedHeader, {
       'X-TKE-FuzzyResourceName': keyword
@@ -125,7 +144,7 @@ export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?
   } catch (error) {
     // 如果返回是 401的话，自动登出，此时是鉴权不过，cookies失效了
     if (error.response && error.response.status === 401) {
-      // location.reload();
+      location.reload();
     } else if (error.response && error.response.status === 403) {
       changeForbiddentConfig({
         isShow: true,
@@ -182,7 +201,7 @@ export const reduceNetworkWorkflow = (error: any) => {
  * @param target T[]
  * @param error any
  */
-export const operationResult = function<T>(target: T[] | T, error?: any): OperationResult<T>[] {
+export const operationResult = function <T>(target: T[] | T, error?: any): OperationResult<T>[] {
   if (target instanceof Array) {
     return target.map(x => ({ success: !error, target: x, error }));
   }
