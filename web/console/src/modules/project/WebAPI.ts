@@ -1,17 +1,25 @@
 import { collectionPaging, OperationResult, QueryState, RecordSet, uuid } from '@tencent/ff-redux';
 
 import { resourceConfig } from '../../../config/resourceConfig';
-import {
-    reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow
-} from '../../../helpers';
+import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow } from '../../../helpers';
 import { Method } from '../../../helpers/reduceNetwork';
+import { reduceK8sQueryString } from '../../../helpers/urlUtil';
 import { Region, RegionFilter, RequestParams, ResourceInfo } from '../common/models';
 import { resourceTypeToUnit } from './constants/Config';
 import {
-    Cluster, ClusterFilter, Manager, ManagerFilter, Namespace, NamespaceEdition, NamespaceFilter,
-    NamespaceOperator, Project, ProjectEdition, ProjectFilter
+  Cluster,
+  ClusterFilter,
+  Manager,
+  ManagerFilter,
+  Namespace,
+  NamespaceEdition,
+  NamespaceFilter,
+  NamespaceOperator,
+  Project,
+  ProjectEdition,
+  ProjectFilter
 } from './models';
-import { ProjectResourceLimit } from './models/Project';
+import { ProjectResourceLimit, UserManagedProject, UserManagedProjectFilter } from './models/Project';
 
 // 返回标准操作结果
 function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] {
@@ -26,19 +34,35 @@ function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] 
  * @param query 地域查询的一些过滤条件
  */
 export async function fetchProjectList(query: QueryState<ProjectFilter>) {
-  let { search, paging } = query;
+  let {
+    search,
+    filter: { parentProject },
+    searchFilter: { projectId }
+  } = query;
 
   let projectResourceInfo: ResourceInfo = resourceConfig()['projects'];
-  let url = reduceK8sRestfulPath({ resourceInfo: projectResourceInfo });
+  let k8sQueryObj = {
+    fieldSelector: {
+      'spec.parentProjectName': parentProject ? parentProject : undefined
+    }
+  };
+  k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
+
+  let k8sUrl = reduceK8sRestfulPath({ resourceInfo: projectResourceInfo, specificName: projectId ? projectId : null });
+
+  let queryString = reduceK8sQueryString({ k8sQueryObj, restfulPath: k8sUrl });
+
+  let url = k8sUrl + queryString;
+
   let params: RequestParams = {
     method: Method.get,
     url
   };
-
-  let response = await reduceNetworkRequest(params);
   let projectList = [],
     total = 0;
   try {
+    let response = await reduceNetworkRequest(params);
+
     if (response.code === 0) {
       let listItems = response.data;
       if (listItems.items) {
@@ -430,7 +454,11 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
     let list = response.data;
     userList = list.items
       ? list.items.map(item => {
-          return { id: item.spec && item.spec.id, displayName: item.spec && item.spec.displayName, name: item.spec && item.spec.name };
+          return {
+            id: item.spec && item.spec.id,
+            displayName: item.spec && item.spec.displayName,
+            name: item.spec && item.spec.name
+          };
         })
       : [];
   }
@@ -534,4 +562,234 @@ export async function modifyAdminstrator(projects: ProjectEdition[]) {
   } catch (error) {
     return operationResult(projects, reduceNetworkWorkflow(error));
   }
+}
+
+/**
+ * 业务查询
+ * @param query 地域查询的一些过滤条件
+ */
+export async function fetchProjectUserInfo(query: QueryState<ProjectFilter>) {
+  let projectResourceInfo: ResourceInfo = resourceConfig().auth_project;
+  let url = reduceK8sRestfulPath({ resourceInfo: projectResourceInfo });
+  let params: RequestParams = {
+    method: Method.get,
+    url
+  };
+
+  let response = await reduceNetworkRequest(params);
+  let projectUserMap = {};
+  try {
+    if (response.code === 0) {
+      let listItems = response.data;
+      if (listItems.items) {
+        listItems.items.forEach(item => {
+          let userInfo = item.members
+            ? Object.keys(item.members).map(key => ({
+                id: key,
+                username: item.members[key]
+              }))
+            : [];
+          projectUserMap[item.metadata.name] = userInfo;
+        });
+      }
+    }
+  } catch (error) {
+    // 这里是搜索的时候，如果搜索不到的话，会报404的错误，只有在 resourceNotFound的时候，不把错误抛出去
+    if (+error.response.status !== 404) {
+      throw error;
+    }
+  }
+
+  return projectUserMap;
+}
+/**
+ * 添加已有业务为子业务
+ * @param query
+ */
+export async function addExistMultiProject(projects: Project[], parentProjectName: string) {
+  let resourceInfo = resourceConfig().projects;
+  try {
+    let requests = projects.map(async item => {
+      let url = reduceK8sRestfulPath({ resourceInfo, specificName: item.metadata.name });
+      let method = Method.patch;
+      let param = {
+        method,
+        url,
+        userDefinedHeader: {
+          'Content-Type': 'application/strategic-merge-patch+json'
+        },
+        data: {
+          spec: {
+            parentProjectName
+          }
+        }
+      };
+      let response = reduceNetworkRequest(param);
+      return response;
+    });
+    // 构建参数
+    let response = await Promise.all(requests);
+    if (response.every(r => r.code === 0)) {
+      return operationResult(projects);
+    } else {
+      return operationResult(projects, reduceNetworkWorkflow(response));
+    }
+  } catch (error) {
+    return operationResult(projects, reduceNetworkWorkflow(error));
+  }
+}
+
+export async function deleteParentProject(projects: Project[]) {
+  let resourceInfo = resourceConfig().projects;
+  try {
+    let url = reduceK8sRestfulPath({ resourceInfo, specificName: projects[0].metadata.name });
+    let method = Method.patch;
+    let param = {
+      method,
+      url,
+      userDefinedHeader: {
+        'Content-Type': 'application/strategic-merge-patch+json'
+      },
+      data: {
+        spec: {
+          parentProjectName: null
+        }
+      }
+    };
+    // 构建参数s
+    let response = await reduceNetworkRequest(param);
+    if (response.code === 0) {
+      return operationResult(projects);
+    } else {
+      return operationResult(projects, reduceNetworkWorkflow(response));
+    }
+  } catch (error) {
+    return operationResult(projects, reduceNetworkWorkflow(error));
+  }
+}
+
+export async function fetchNamespaceKubectlConfig(query: QueryState<NamespaceFilter>) {
+  let {
+    filter: { projectId, np }
+  } = query;
+  let NamespaceResourceInfo: ResourceInfo = resourceConfig().namespaces;
+  let url = reduceK8sRestfulPath({
+    resourceInfo: NamespaceResourceInfo,
+    specificName: projectId,
+    extraResource: `namespaces/${np}/certificate`
+  });
+
+  /** 构建参数 */
+  let method = 'GET';
+  let params: RequestParams = {
+    method,
+    url
+  };
+  let result = {
+    certPem: '',
+    keyPem: '',
+    caCertPem: '',
+    apiServer: ''
+  };
+  try {
+    let response = await reduceNetworkRequest(params);
+    if (response.code === 0 && response.data.status.certificate) {
+      result = {
+        certPem: response.data.status.certificate.certPem,
+        keyPem: response.data.status.certificate.keyPem,
+        caCertPem: response.data.status.certificate.caCertPem,
+        apiServer: response.data.status.certificate.apiServer
+      };
+    }
+  } catch (error) {}
+
+  return result;
+}
+
+export async function migrateNamesapce(namespaces: Namespace[], options: NamespaceOperator) {
+  try {
+    let { projectId, desProjectId } = options;
+    let NamespaceResourceInfo: ResourceInfo = resourceConfig().namespaces;
+    let url = reduceK8sRestfulPath({
+      resourceInfo: NamespaceResourceInfo,
+      specificName: projectId,
+      extraResource: `nsemigrations`
+    });
+
+    let method = Method.post;
+    let param = {
+      method,
+      url,
+      data: {
+        kind: 'NsEmigration',
+        apiVersion: 'business.tkestack.io/v1',
+        metadata: {
+          namespace: projectId
+        },
+        spec: {
+          namespace: namespaces[0].metadata.name,
+          nsShowName: namespaces[0].metadata.namespace,
+          destination: desProjectId
+        }
+      }
+    };
+    // 构建参数
+    let response = await reduceNetworkRequest(param);
+    if (response.code === 0) {
+      return operationResult(namespaces);
+    } else {
+      return operationResult(namespaces, reduceNetworkWorkflow(response));
+    }
+  } catch (error) {
+    return operationResult(namespaces, reduceNetworkWorkflow(error));
+  }
+}
+/**
+ * 集群列表的查询
+ * @param query 集群列表查询的一些过滤条件
+ */
+export async function fetchUserManagedProjects(query: QueryState<UserManagedProjectFilter>) {
+  let { userId } = query.filter;
+  let userResourceInfo: ResourceInfo = resourceConfig().user;
+  let url = reduceK8sRestfulPath({
+    resourceInfo: userResourceInfo,
+    specificName: userId,
+    extraResource: 'projects'
+  });
+
+  /** 构建参数 */
+  let method = 'GET';
+  let params: RequestParams = {
+    method,
+    url
+  };
+
+  let response = await reduceNetworkRequest(params);
+  let managedProjects = [];
+  if (response.code === 0) {
+    let list = response.data;
+    managedProjects = Object.keys(list.managedProjects).map(item => ({ id: item, name: item }));
+  }
+
+  const result: RecordSet<UserManagedProject> = {
+    recordCount: managedProjects.length,
+    records: managedProjects
+  };
+
+  return result;
+}
+export async function fetchUserId(query: QueryState<string>) {
+  let infoResourceInfo: ResourceInfo = resourceConfig()['info'];
+  let url = reduceK8sRestfulPath({ resourceInfo: infoResourceInfo });
+  let params: RequestParams = {
+    method: Method.get,
+    url
+  };
+  let result;
+  try {
+    let response = await reduceNetworkRequest(params);
+    result = response.data;
+  } catch (error) {}
+
+  return result;
 }

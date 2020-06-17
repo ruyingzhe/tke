@@ -24,6 +24,7 @@ export class ProjectActionPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions } = this.props;
     actions.project.poll({});
+    actions.project.projectUserInfo.applyFilter({});
     actions.manager.applyFilter({});
     actions.manager.fetchAdminstratorInfo();
   }
@@ -72,7 +73,6 @@ export class ProjectActionPanel extends React.Component<RootProps, {}> {
       </div>
     );
   }
-
   private _renderEditAdminstratorDialog() {
     const { actions, projectEdition, modifyAdminstrator } = this.props;
     return (
