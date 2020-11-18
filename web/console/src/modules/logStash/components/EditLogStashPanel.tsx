@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { CreateResource } from 'src/modules/cluster/models';
 
-import { Button, ExternalLink, Segment, Text } from '@tea/component';
+import { Button, Bubble, ExternalLink, Segment, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
 import {
     bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
@@ -27,6 +27,7 @@ import { EditOriginContainerPanel } from './EditOriginContainerPanel';
 import { EditOriginNodePanel } from './EditOriginNodePanel';
 import { isCanCreateLogStash } from './LogStashActionPanel';
 import { RootProps } from './LogStashApp';
+import { Base64 } from 'js-base64';
 
 /** 日志采集类型的提示 */
 const logModeTip = {
@@ -48,6 +49,22 @@ const mapDispatchToProps = dispatch =>
 
 @connect(state => state, mapDispatchToProps)
 export class EditLogStashPanel extends React.Component<RootProps, any> {
+  constructor(props) {
+    super(props);
+
+    this.handleESStatusChange = this.handleESStatusChange.bind(this);
+
+    this.state = {
+      checkESStatus: 0
+    };
+  }
+
+  handleESStatusChange(status) {
+    this.setState({
+      checkESStatus: status
+    });
+  }
+
   componentWillUnmount() {
     let { actions, route } = this.props;
     // 清理logStashEdit的内容
@@ -108,6 +125,10 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         text: logModeList[mode].name
       };
     });
+
+    const checkESStatus = this.state.checkESStatus;
+    const esNotOK = checkESStatus === 1 || checkESStatus === 2 || checkESStatus === 4;
+
     // 如果是在业务侧，去掉"节点文件路径"
     if (byProject) {
       logModeSegments.pop();
@@ -157,11 +178,11 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
               <Text parent="p">
                 <Trans>
                   如现有的集群不合适，您可以去控制台
-                  <ExternalLink href={`/tke/cluster/create?rid=${route.queries['rid']}`} target="_self">
+                  <ExternalLink href={`/tkestack/cluster/create?rid=${route.queries['rid']}`} target="_self">
                     导入集群
                   </ExternalLink>
                   或者
-                  <ExternalLink href={`/tke/cluster/createIC?rid=${route.queries['rid']}`} target="_self">
+                  <ExternalLink href={`/tkestack/cluster/createIC?rid=${route.queries['rid']}`} target="_self">
                     新建一个独立集群
                   </ExternalLink>
                 </Trans>
@@ -257,20 +278,23 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
 
         <EditOriginContainerFilePanel isEdit={mode === 'update'} />
 
-        <EditConsumerPanel />
+        <EditConsumerPanel onESStatusChange={this.handleESStatusChange} />
+
         <FormPanel.Footer>
-          <Button
-            type="primary"
-            disabled={modifyLogStashFlow.operationState === OperationState.Performing || !canCreate}
-            onClick={() => {
-              this._handleSubmit(mode);
-            }}
-            style={{
-              marginRight: '20px'
-            }}
-          >
-            {t('完成')}
-          </Button>
+          <Bubble placement="top-start" content={esNotOK ? t('请检测连接 ElasticSearch，连接成功才能设置日志采集规则') : null}>
+            <Button
+              type="primary"
+              disabled={modifyLogStashFlow.operationState === OperationState.Performing || !canCreate || esNotOK}
+              onClick={() => {
+                this._handleSubmit(mode);
+              }}
+              style={{
+                marginRight: '20px'
+              }}
+            >
+              {t('完成')}
+            </Button>
+          </Bubble>
           <Button
             type="weak"
             onClick={e => {
@@ -329,6 +353,8 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
       topic,
       esAddress,
       indexName,
+      esUsername,
+      esPassword,
       containerFileNamespace,
       containerFileWorkload,
       containerFileWorkloadType,
@@ -455,7 +481,9 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         let esOutput: ElasticsearchOutput = {
           elasticsearch_output: {
             hosts: [address],
-            index: indexName
+            index: indexName,
+            user: esUsername,
+            password: Base64.encode(esPassword)
           },
           type: 'elasticsearch'
         };

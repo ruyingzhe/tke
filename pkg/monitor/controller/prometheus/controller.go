@@ -577,10 +577,9 @@ func (c *Controller) createPrometheusIfNeeded(ctx context.Context, key string, c
 		log.Info("Prometheus try checking after fail", log.String("prome", key))
 		if _, ok := c.checking.Load(key); !ok {
 			c.checking.Store(key, prometheus)
-			delayTime := time.Now().Add(2 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediateUntil(60*time.Second, c.checkPrometheusStatus(ctx, prometheus, key, delayTime), c.stopCh)
+				wait.PollImmediateUntil(60*time.Second, c.checkPrometheusStatus(ctx, prometheus, key, time.Time{}), c.stopCh)
 			}()
 		}
 	}
@@ -2335,22 +2334,6 @@ func createAppsDeploymentForPrometheusAdapter(components images.Components, prom
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: prometheusAdapterServiceAccount,
-					Affinity: &corev1.Affinity{
-						NodeAffinity: &corev1.NodeAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-								NodeSelectorTerms: []corev1.NodeSelectorTerm{
-									{
-										MatchExpressions: []corev1.NodeSelectorRequirement{
-											{
-												Key:      "node-role.kubernetes.io/master",
-												Operator: corev1.NodeSelectorOpExists,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
 					Containers: []corev1.Container{
 						{
 							Name:  prometheusAdapterWorkLoad,
@@ -2363,7 +2346,7 @@ func createAppsDeploymentForPrometheusAdapter(components images.Components, prom
 								"--v=3",
 								"--config=/etc/adapter/config.yaml",
 								"--cert-dir=/tmp",
-								"--requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt",
+								"--requestheader-client-ca-file=/etc/kubernetes/pki/requestheader-client-ca-file",
 								"--requestheader-allowed-names=front-proxy-client,admin",
 								"--requestheader-extra-headers-prefix=X-Remote-Extra-",
 								"--requestheader-group-headers=X-Remote-Group",
@@ -2384,7 +2367,7 @@ func createAppsDeploymentForPrometheusAdapter(components images.Components, prom
 								},
 								{
 									MountPath: "/etc/kubernetes/pki/",
-									Name:      "etc-kubernetes-pki",
+									Name:      "extension-apiserver-authentication",
 									ReadOnly:  true,
 								},
 							},
@@ -2392,10 +2375,12 @@ func createAppsDeploymentForPrometheusAdapter(components images.Components, prom
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: "etc-kubernetes-pki",
+							Name: "extension-apiserver-authentication",
 							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/etc/kubernetes/pki/",
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "extension-apiserver-authentication",
+									},
 								},
 							},
 						},
@@ -2972,7 +2957,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 		}
 
 		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", PrometheusService, PrometheusServicePort, `/-/healthy`, nil).DoRaw(ctx); err != nil {
-			if time.Now().After(initDelay) {
+			if !initDelay.IsZero() && time.Now().After(initDelay) {
 				prometheus = prometheus.DeepCopy()
 				prometheus.Status.Phase = v1.AddonPhaseFailed
 				prometheus.Status.Reason = "Prometheus is not healthy."

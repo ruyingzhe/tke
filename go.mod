@@ -12,6 +12,7 @@ replace (
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/Masterminds/semver v1.5.0
+	github.com/antihax/optional v0.0.0-20180407024304-ca021399b1a6
 	github.com/aws/aws-sdk-go v1.29.32
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/caddyserver/caddy v1.0.5
@@ -20,10 +21,9 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.38.1-0.20200506070354-4231c1d4b313
 	github.com/cyphar/filepath-securejoin v0.2.2
+	github.com/deckarep/golang-set v1.7.1
 	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
-	github.com/docker/compose-on-kubernetes v0.4.24 // indirect
 	github.com/docker/distribution v2.7.2-0.20200708230840-70e0022e42fd+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7
@@ -36,6 +36,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.5 // indirect
 	github.com/google/gofuzz v1.1.0
+	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.0
 	github.com/gosuri/uitable v0.0.4
@@ -74,11 +75,13 @@ require (
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/grpc v1.26.0
+	gopkg.in/fatih/set.v0 v0.2.1
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.2.8
+	gotest.tools v2.2.0+incompatible
 	helm.sh/chartmuseum v0.12.0
 	helm.sh/helm/v3 v3.2.1
 	k8s.io/api v0.18.2

@@ -22,10 +22,13 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	certutil "k8s.io/client-go/util/cert"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
@@ -95,7 +98,7 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 				actualCertSANs = append(actualCertSANs, ip.String())
 			}
 			if reflect.DeepEqual(funk.IntersectString(actualCertSANs, exptectCertSANs), exptectCertSANs) {
-				return nil
+				continue
 			}
 			log.FromContext(ctx).Info("EnsureAPIServerCert",
 				"nodeName", s.Host,
@@ -104,11 +107,12 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 			)
 		}
 
+		var preActions []string
 		for _, file := range []string{constants.APIServerCertName, constants.APIServerKeyName} {
-			s.CombinedOutput(fmt.Sprintf("rm -f %s", file))
+			preActions = append(preActions, fmt.Sprintf("rm -f %s", file))
 		}
 
-		err = kubeadm.Init(s, kubeadmConfig, "certs apiserver")
+		err = kubeadm.Init(s, kubeadmConfig, "certs apiserver", preActions...)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -136,14 +140,31 @@ func (p *Provider) EnsurePreClusterUpgradeHook(ctx context.Context, c *v1.Cluste
 }
 
 func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Cluster) error {
+	// check all machines are upgraded before upgrade cluster
+	machines, err := p.platformClient.Machines().List(context.TODO(), metav1.ListOptions{
+		LabelSelector: fields.OneTermEqualSelector(constants.LabelNodeNeedUpgrade, "").String(),
+		FieldSelector: fields.OneTermEqualSelector(platformv1.MachineClusterField, c.Name).String(),
+	})
+	if err != nil {
+		return err
+	}
+	if len(machines.Items) != 0 {
+		var itemsName []string
+		for _, item := range machines.Items {
+			itemsName = append(itemsName, item.Name)
+		}
+		return fmt.Errorf("some machines, [%s], need to be upgraded", strings.Join(itemsName, ","))
+	}
+
 	client, err := c.Clientset()
 	if err != nil {
 		return err
 	}
 	option := kubeadm.UpgradeOption{
-		NodeRole:   kubeadm.NodeRoleMaster,
-		Version:    c.Spec.Version,
-		MaxUnready: c.Spec.Upgrade.Strategy.MaxUnready,
+		NodeRole:               kubeadm.NodeRoleMaster,
+		Version:                c.Spec.Version,
+		MaxUnready:             c.Spec.Features.Upgrade.Strategy.MaxUnready,
+		DrainNodeBeforeUpgrade: c.Spec.Features.Upgrade.Strategy.DrainNodeBeforeUpgrade,
 	}
 	for i, machine := range c.Spec.Machines {
 		option.MachineName = machine.Username
@@ -153,21 +174,24 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 		if err != nil {
 			return err
 		}
-		upgraded, err := kubeadm.UpgradeNode(s, client, p.platformClient, option)
+		upgraded, err := kubeadm.UpgradeNode(s, client, p.platformClient, c, option)
 		if err != nil {
 			return err
 		}
 
-		// Label next node when upgraded all master nodes and upgrade mode is auto.
-		if upgraded && c.Spec.Upgrade.Mode == platformv1.UpgradeModeAuto && i == len(c.Spec.Machines)-1 {
-			err = kubeadm.MarkNextUpgradeWorkerNode(client, p.platformClient, option.Version)
-			if err != nil {
+		if i == len(c.Spec.Machines)-1 && upgraded {
+			if err := kubeadm.AddNeedUpgradeLabel(p.platformClient, c.Name); err != nil {
 				return err
+			}
+			// Label next node when upgraded all master nodes and upgrade mode is auto.
+			if c.Spec.Features.Upgrade.Mode == platformv1.UpgradeModeAuto {
+				err = kubeadm.MarkNextUpgradeWorkerNode(client, p.platformClient, option.Version, c.Name)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
-	c.Status.Phase = platformv1.ClusterRunning
-
 	return nil
 }
 

@@ -46,6 +46,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -205,6 +206,10 @@ func (t *TKE) initSteps() {
 		{
 			Name: "Create global cluster",
 			Func: t.createGlobalCluster,
+		},
+		{
+			Name: "Patch k8s version in cluster info",
+			Func: t.patchK8sValidVersions,
 		},
 		{
 			Name: "Write kubeconfig",
@@ -966,7 +971,7 @@ func (t *TKE) do() {
 			start := time.Now()
 			err := t.steps[t.Step].Func(ctx)
 			if err != nil {
-				t.progress.Status = types.StatusFailed
+				t.progress.Status = types.StatusRetrying
 				t.log.Errorf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
 				return false, nil
 			}
@@ -974,7 +979,7 @@ func (t *TKE) do() {
 
 			t.Step++
 			t.backup()
-
+			t.progress.Status = types.StatusDoing
 			return true, nil
 		})
 	}
@@ -1280,6 +1285,14 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	webhookCrt, err := ioutil.ReadFile(constants.WebhookCrtFile)
+	if err != nil {
+		return err
+	}
+	webhookKey, err := ioutil.ReadFile(constants.WebhookKeyFile)
+	if err != nil {
+		return err
+	}
 
 	if t.Cluster.Spec.Etcd.External != nil {
 		return fmt.Errorf("external etcd specified, but ca key is not provided yet")
@@ -1307,11 +1320,17 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 			"server.key":         string(serverKey),
 			"admin.crt":          string(adminCrt),
 			"admin.key":          string(adminKey),
+			"webhook.crt":        string(webhookCrt),
+			"webhook.key":        string(webhookKey),
 		},
 	}
 
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		cm.Data["oidc-ca.crt"] = string(t.Para.Config.Auth.OIDCAuth.CACert)
+	}
+
+	if t.Para.Config.Registry.TKERegistry.HarborCAFile != "" {
+		cm.Data["harbor-ca.crt"] = t.Para.Config.Registry.TKERegistry.HarborCAFile
 	}
 
 	cm.Data["password.csv"] = fmt.Sprintf("%s,admin,1,administrator", ksuid.New().String())
@@ -1966,6 +1985,8 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 		"EnableBusiness": t.businessEnabled(),
 		"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
 		"EnableAudit":    t.auditEnabled(),
+		"HarborEnabled":  t.Para.Config.Registry.TKERegistry.HarborEnabled,
+		"HarborCAFile":   t.Para.Config.Registry.TKERegistry.HarborCAFile,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -2402,4 +2423,22 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 	_ = ioutil.WriteFile(constants.KubeconfigFile, data, 0644)
 	_ = os.MkdirAll("/root/.kube", 0755)
 	return ioutil.WriteFile("/root/.kube/config", data, 0644)
+}
+
+func (t *TKE) patchK8sValidVersions(ctx context.Context) error {
+	versionsByte, err := json.Marshal(spec.K8sValidVersions)
+	if err != nil {
+		return err
+	}
+	patchData := map[string]interface{}{
+		"data": map[string]interface{}{
+			"k8sValidVersions": string(versionsByte),
+		},
+	}
+	patchByte, err := json.Marshal(patchData)
+	if err != nil {
+		return err
+	}
+	_, err = t.globalClient.CoreV1().ConfigMaps("kube-public").Patch(ctx, "cluster-info", k8stypes.MergePatchType, patchByte, metav1.PatchOptions{})
+	return err
 }

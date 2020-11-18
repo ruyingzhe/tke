@@ -39,6 +39,7 @@ import (
 	platformapiserver "tkestack.io/tke/pkg/platform/apiserver"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
+	"tkestack.io/tke/pkg/registry/harbor"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -117,6 +118,18 @@ func componentPrefix() map[moduleName][]modulePath {
 			},
 			modulePath{
 				prefix:    chartmuseum.PathPrefix,
+				protected: false,
+			},
+			modulePath{
+				prefix:    harbor.RegistryPrefix,
+				protected: false,
+			},
+			modulePath{
+				prefix:    harbor.AuthPrefix,
+				protected: false,
+			},
+			modulePath{
+				prefix:    harbor.ChartPrefix,
 				protected: false,
 			},
 			modulePath{
