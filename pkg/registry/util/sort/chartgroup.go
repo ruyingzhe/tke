@@ -16,23 +16,33 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package chartpath
+package sort
 
 import (
+	"strings"
+
 	"tkestack.io/tke/api/registry"
-	v1 "tkestack.io/tke/api/registry/v1"
-	helmaction "tkestack.io/tke/pkg/application/helm/action"
-	registryconfig "tkestack.io/tke/pkg/registry/config"
-	chartpathv1 "tkestack.io/tke/pkg/registry/util/chartpath/v1"
 )
 
-// BuildChartPathBasicOptions will judge chartgroup type and return well-structured ChartPathOptions
-func BuildChartPathBasicOptions(repo registryconfig.RepoConfiguration, cg registry.ChartGroup) (opt helmaction.ChartPathOptions, err error) {
-	var v1ChartGroup = &v1.ChartGroup{}
-	err = v1.Convert_registry_ChartGroup_To_v1_ChartGroup(&cg, v1ChartGroup, nil)
-	if err != nil {
-		return opt, err
-	}
+// ChartGroupSlice chartgroup array
+type ChartGroupSlice []registry.ChartGroup
 
-	return chartpathv1.BuildChartPathBasicOptions(repo, *v1ChartGroup)
+// Len return length
+func (o ChartGroupSlice) Len() int { return len(o) }
+
+// Swap will swap data by index
+func (o ChartGroupSlice) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
+
+// ChartGroupsByName sort chartgroups by chartgroup name
+type ChartGroupsByName struct {
+	ChartGroupSlice
+	Desc bool
+}
+
+// Less 根据target升序排序
+func (o ChartGroupsByName) Less(i, j int) bool {
+	if o.Desc {
+		return strings.Compare(o.ChartGroupSlice[i].Spec.Name, o.ChartGroupSlice[j].Spec.Name) > 0
+	}
+	return strings.Compare(o.ChartGroupSlice[i].Spec.Name, o.ChartGroupSlice[j].Spec.Name) <= 0
 }

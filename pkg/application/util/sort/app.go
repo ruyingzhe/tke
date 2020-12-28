@@ -16,13 +16,33 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package config
+package sort
 
-// RepoConfiguration contains options to connect to a chart repo.
-type RepoConfiguration struct {
-	Scheme        string
-	DomainSuffix  string
-	CaFile        string
-	Admin         string
-	AdminPassword string
+import (
+	"strings"
+
+	"tkestack.io/tke/api/application"
+)
+
+// AppSlice chartgroup array
+type AppSlice []application.App
+
+// Len return length
+func (o AppSlice) Len() int { return len(o) }
+
+// Swap will swap data by index
+func (o AppSlice) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
+
+// AppsByName sort chartgroups by chartgroup name
+type AppsByName struct {
+	AppSlice
+	Desc bool
+}
+
+// Less 根据target升序排序
+func (o AppsByName) Less(i, j int) bool {
+	if o.Desc {
+		return strings.Compare(o.AppSlice[i].Spec.Name, o.AppSlice[j].Spec.Name) > 0
+	}
+	return strings.Compare(o.AppSlice[i].Spec.Name, o.AppSlice[j].Spec.Name) <= 0
 }
