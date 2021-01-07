@@ -71,6 +71,7 @@ import (
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
@@ -218,10 +219,6 @@ func (t *TKE) initSteps() {
 			Func: t.createGlobalCluster,
 		},
 		{
-			Name: "Patch platform versions in cluster info",
-			Func: t.patchPlatformVersion,
-		},
-		{
 			Name: "Write kubeconfig",
 			Func: t.writeKubeconfig,
 		},
@@ -248,6 +245,10 @@ func (t *TKE) initSteps() {
 		{
 			Name: "Install etcd",
 			Func: t.installETCD,
+		},
+		{
+			Name: "Patch platform versions in cluster info",
+			Func: t.patchPlatformVersion,
 		},
 	}...)
 
@@ -2445,12 +2446,18 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 }
 
 func (t *TKE) patchPlatformVersion(ctx context.Context) error {
-	tkeVersion, _, err := t.getPlatformVersions(ctx)
+	if t.globalClient == nil {
+		return errors.New("can't get cluster client")
+	}
+
+	tkeVersion, _, err := platformutil.GetPlatformVersionsFromClusterInfo(ctx, t.globalClient)
 	if err != nil {
 		return err
 	}
+	log.Infof("current platform version is %s, installer version is %s", tkeVersion, spec.TKEVersion)
 	if tkeVersion == spec.TKEVersion {
 		log.Info("skip patch platform version, current installer version is equal to platform version")
+		return nil
 	}
 
 	versionsByte, err := json.Marshal(spec.K8sValidVersions)
